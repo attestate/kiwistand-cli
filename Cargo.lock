@@ -777,6 +777,7 @@ dependencies = [
  "ethers-contract-abigen",
  "ethers-contract-derive",
  "ethers-core",
+ "ethers-derive-eip712",
  "ethers-providers",
  "futures-util",
  "hex",
@@ -856,6 +857,19 @@ dependencies = [
  "thiserror",
  "tiny-keccak",
  "unicode-xid",
+]
+
+[[package]]
+name = "ethers-derive-eip712"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "083ad25436e147ab3be457a680b018a9fa981a3f8b7379f5dc19024223d0d6e5"
+dependencies = [
+ "ethers-core",
+ "hex",
+ "quote",
+ "serde_json",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -1471,6 +1485,7 @@ dependencies = [
  "ethers",
  "eyre",
  "rand",
+ "serde_json",
  "tokio",
 ]
 
