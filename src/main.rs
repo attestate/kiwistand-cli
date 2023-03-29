@@ -1,8 +1,9 @@
 // @format
 use clap::{Args, Parser, Subcommand};
 use dirs::home_dir;
-use ethers::{signers::LocalWallet};
+use ethers::signers::LocalWallet;
 use std::fs;
+use std::path::Path;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -22,33 +23,33 @@ struct InitArgs {
     password: Option<String>,
 }
 
+fn store_key(password: &String) {
+    let mut config_dir = home_dir().unwrap();
+    config_dir.push(".kiwistand");
+    let _ = fs::create_dir(&config_dir);
+    let name = "key";
+
+    let mut key_path = config_dir.to_path_buf();
+    key_path.push(name);
+    if !Path::new(&key_path).exists() {
+        let mut rng = rand::thread_rng();
+        LocalWallet::new_keystore(&config_dir, &mut rng, password, Some(name)).unwrap();
+        return;
+    }
+    println!("Bailed from creating key store as it already exists");
+}
+
 fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Init(args) => {
-            let mut config_dir = home_dir().unwrap();
-            config_dir.push(".kiwistand");
-            let _ = fs::create_dir(&config_dir);
-
             let password = match &args.password {
                 Some(password) => password,
-                None => panic!("password must be provided")
-
+                None => panic!("password must be provided"),
             };
-            let mut rng = rand::thread_rng();
-            let name = Some("key");
-            let key = 
-                LocalWallet::new_keystore(&config_dir, &mut rng, password, name).unwrap();
+            dbg!(password);
+            store_key(password);
         }
     }
 }
-
-//#[tokio::main]
-//async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//    let provider = Provider::<Http>::try_from("https://")?;
-//    let block_number: U64 = provider.get_block_number().await?;
-//    println!("{block_number}");
-//
-//    Ok(())
-//}
