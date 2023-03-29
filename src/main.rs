@@ -2,16 +2,14 @@
 use clap::{Args, Parser, Subcommand};
 use dirs::home_dir;
 use ethers::{
-    contract::{EthAbiType, Eip712},
-    core::{
-        types::{transaction::eip712::Eip712, U256, Signature},
-    },
+    contract::{Eip712, EthAbiType},
+    core::types::{transaction::eip712::Eip712, U256},
     signers::{LocalWallet, Signer},
 };
+use serde_json::{json, Value};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde_json::json;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -65,17 +63,13 @@ fn read_key(password: &String) -> LocalWallet {
     key_path.push("key");
     let wallet = match LocalWallet::decrypt_keystore(key_path, password) {
         Ok(wallet) => wallet,
-        Err(error) => panic!("Problem reading and/or decrypting the key store")
+        Err(error) => panic!("Problem reading and/or decrypting the key store"),
     };
     return wallet;
 }
 
 #[derive(Debug, Clone, Eip712, EthAbiType)]
-#[eip712(
-    name = "replica",
-    version = "1",
-    chain_id = 666,
-)]
+#[eip712(name = "replica", version = "1", chain_id = 6666)]
 pub struct Message {
     pub title: String,
     pub href: String,
@@ -91,23 +85,39 @@ fn get_unix_time() -> u64 {
     return now.as_secs();
 }
 
-async fn create_message(password: &String, href: &String, title: &String) -> String {
+async fn create_message(password: &String, href: &String, title: &String) -> Value {
     let wallet = read_key(password);
+    let timestamp = get_unix_time();
     let message = Message {
         title: String::from(title),
         href: String::from(href),
         r#type: String::from("amplify"),
-        timestamp: U256::from(get_unix_time())
+        timestamp: U256::from(timestamp),
     };
-    let sig = wallet.sign_typed_data(&message).await.expect("failed to sign typed data");
+    let sig = wallet
+        .sign_typed_data(&message)
+        .await
+        .expect("failed to sign typed data");
+    // TODO: We should actually test this signature against the signature
+    // from JS and make sure they're equal.
     let body = json!({
         "title": message.title,
         "href": message.href,
         "type": message.r#type,
-        "timestamp": message.timestamp,
-        "signature": sig.to_string(),
+        "timestamp": timestamp,
+        "signature": format!("0x{}", sig.to_string()),
     });
-    return body.to_string();
+    return body;
+}
+
+async fn send(message: Value) {
+    let client = reqwest::Client::new();
+    dbg!(&message);
+    client
+        .post("http://localhost:3000/messages")
+        .json(&message)
+        .send()
+        .await;
 }
 
 #[tokio::main]
@@ -121,22 +131,22 @@ async fn main() {
                 None => panic!("password must be provided"),
             };
             store_key(password);
-        },
+        }
         Commands::Submit(args) => {
             let password = match &args.password {
                 Some(password) => password,
                 None => panic!("password must be provided"),
             };
-            let href = match &args.href{
+            let href = match &args.href {
                 Some(href) => href,
                 None => panic!("href must be provided"),
             };
-            let title = match &args.title{
+            let title = match &args.title {
                 Some(title) => title,
                 None => panic!("title must be provided"),
             };
             let message = create_message(password, href, title).await;
-            dbg!(message);
+            send(message).await;
         }
     }
 }
