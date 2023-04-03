@@ -3,9 +3,9 @@ use clap::{Args, Parser, Subcommand};
 use dirs::home_dir;
 use ethers::{
     contract::{Eip712, EthAbiType},
+    core::k256::ecdsa::SigningKey,
     core::types::{transaction::eip712::Eip712, Signature, U256},
     signers::{LocalWallet, Signer},
-    core::k256::ecdsa::{SigningKey},
 };
 use serde_json::{json, Value};
 use std::fs;
@@ -70,7 +70,7 @@ fn read_key(password: &String) -> LocalWallet {
 }
 
 #[derive(Debug, Clone, Eip712, EthAbiType)]
-#[eip712(name = "replica", version = "1", chain_id = 6666)]
+#[eip712(name = "kiwinews", version = "1.0.0", salt="kiwinews domain separator salt")]
 pub struct Message {
     pub title: String,
     pub href: String,
@@ -89,10 +89,7 @@ fn get_unix_time() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ethers::{
-        signers::{Wallet},
-        core::types::{H160},
-    };
+    use ethers::{core::types::H160, signers::Wallet};
 
     #[tokio::test]
     async fn compare_signatures() {
@@ -108,11 +105,15 @@ mod tests {
         dbg!(&message);
 
         let wallet: Wallet<SigningKey> =
-            "ad54bdeade5537fb0a553190159783e45d02d316a992db05cbed606d3ca36b39".parse().unwrap();
-        let expected: H160 = "0x0f6A79A579658E401E0B81c6dde1F2cd51d97176".parse().unwrap();
+            "ad54bdeade5537fb0a553190159783e45d02d316a992db05cbed606d3ca36b39"
+                .parse()
+                .unwrap();
+        let expected: H160 = "0x0f6A79A579658E401E0B81c6dde1F2cd51d97176"
+            .parse()
+            .unwrap();
         assert_eq!(wallet.address(), expected);
         let signature = sign(wallet, &message).await;
-        assert_eq!(signature.to_string(), "dc33965bbb55580bf9f209fb0d6a45e4538120f55eba133b4ef339d884ab45882f6f92a4e2aa5f99139f4f2ad82b21ac437dfd139b39383c0d3e7b8b2fac74321c");
+        assert_eq!(signature.to_string(), "1df128dfe1f86df4e20ecc6ebbd586e0ab56e3fc8d0db9210422c3c765633ad8793af68aa232cf39cc3f75ea18f03260258f7276c2e0d555f98e1cf16672dd201c");
     }
 }
 
