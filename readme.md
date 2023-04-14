@@ -13,7 +13,7 @@ signs the submitted messages using Ethereum's EIP-712 typed data.
 
 1. Clone this repository:
 
-   git clone https://github.com/yourusername/kiwistand.git
+   git clone https://github.com/attestate/kiwistand-cli.git
 
 2. Navigate to the cloned directory:
 
