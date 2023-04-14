@@ -60,9 +60,13 @@ Replace "your_password" with your desired password. The keystore file will be
 generated and stored in the .kiwistand directory under your home directory. The
 keystore file is at `$home/.kiwistand/key`.
 
-However, consider that your address must be a minter of the
+## NFT Required!
+
+Consider that your address must be a "minter" of the
 http://kiwistand.com NFT, otherwise your submission won't be accepted by the
-nodes.
+nodes. This means, it must be the `to` address in the token's first
+`Transfer(from, to, tokenId)` event where `from=address(0)`. Otherwise
+your message will be dropped and considered invalid.
 
 ## License
 
