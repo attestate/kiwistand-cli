@@ -44,7 +44,8 @@ cargo run -- init <your_password>
 ```
 
 Replace "your_password" with your desired password. The keystore file will be
-generated and stored in the .kiwistand directory under your home directory.
+generated and stored in the .kiwistand directory under your home directory. The
+keystore file is at `$home/.kiwistand/key`.
 
 However, consider that your address must be a minter of the
 http://kiwistand.com NFT, otherwise your submission won't be accepted by the
