@@ -22,6 +22,19 @@ signs the submitted messages using Ethereum's EIP-712 typed data.
 3. Make sure you adjust the target endpoint in `src/main.rs` from
    `http://localhost` to the node you want to submit the link to.
 
+## Submitting a Link with a Ledger
+
+- Make sure to have Ledger Live open and your Ledger connected
+
+To submit a link with its title, run the following command:
+
+```
+cargo run -- submit-ledger https://warpcast.com/timdaub/0x1f54f8 "Kiwistand is live"
+```
+
+Replace "https://warpcast.com", and "Kiwistand is live" with your desired link,
+and title, respectively.
+
 ## Submitting a Link
 
 To submit a link with its title, run the following command:
@@ -30,8 +43,8 @@ To submit a link with its title, run the following command:
 cargo run -- submit abc https://warpcast.com/timdaub/0x1f54f8 "Kiwistand is live"
 ```
 
-Replace "your_password", "https://example.com", and "Example Title" with your
-desired password, link, and title, respectively.
+Replace the "abc" password, "https://warpcast.com", and "Kiwistand is live"
+with your desired link, and title, respectively.
 
 ## Generating a New Keystore File
 

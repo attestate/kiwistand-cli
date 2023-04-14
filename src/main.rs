@@ -5,7 +5,7 @@ use ethers::{
     contract::{Eip712, EthAbiType},
     core::k256::ecdsa::SigningKey,
     core::types::{transaction::eip712::Eip712, Signature, U256},
-    signers::{LocalWallet, Signer},
+    signers::{HDPath, Ledger, LocalWallet, Signer},
 };
 use serde_json::{json, Value};
 use std::fs;
@@ -24,6 +24,7 @@ struct Cli {
 enum Commands {
     Init(InitArgs),
     Submit(SubmitArgs),
+    SubmitLedger(LedgerArgs),
 }
 
 #[derive(Args)]
@@ -34,6 +35,12 @@ struct InitArgs {
 #[derive(Args)]
 struct SubmitArgs {
     password: Option<String>,
+    href: Option<String>,
+    title: Option<String>,
+}
+
+#[derive(Args)]
+struct LedgerArgs {
     href: Option<String>,
     title: Option<String>,
 }
@@ -70,7 +77,11 @@ fn read_key(password: &String) -> LocalWallet {
 }
 
 #[derive(Debug, Clone, Eip712, EthAbiType)]
-#[eip712(name = "kiwinews", version = "1.0.0", salt="kiwinews domain separator salt")]
+#[eip712(
+    name = "kiwinews",
+    version = "1.0.0",
+    salt = "kiwinews domain separator salt"
+)]
 pub struct Message {
     pub title: String,
     pub href: String,
@@ -117,6 +128,15 @@ mod tests {
     }
 }
 
+async fn sign_ledger(message: &Message) -> Signature {
+    let ledger = Ledger::new(HDPath::LedgerLive(0), 1u64).await.unwrap();
+
+    return ledger
+        .sign_typed_struct(message)
+        .await
+        .expect("failed to sign typed data");
+}
+
 async fn sign(wallet: LocalWallet, message: &Message) -> Signature {
     return wallet
         .sign_typed_data(message)
@@ -124,8 +144,7 @@ async fn sign(wallet: LocalWallet, message: &Message) -> Signature {
         .expect("Couldn't sign message");
 }
 
-async fn create_message(password: &String, href: &String, title: &String) -> Value {
-    let wallet = read_key(password);
+async fn create_message(password: &String, href: &String, title: &String, ledger: bool) -> Value {
     let timestamp = get_unix_time();
     let message = Message {
         title: String::from(title),
@@ -133,7 +152,13 @@ async fn create_message(password: &String, href: &String, title: &String) -> Val
         r#type: String::from("amplify"),
         timestamp: U256::from(timestamp),
     };
-    let sig = sign(wallet, &message).await;
+    let sig;
+    if ledger {
+        sig = sign_ledger(&message).await;
+    } else {
+        let wallet = read_key(password);
+        sig = sign(wallet, &message).await;
+    }
     // TODO: We should actually test this signature against the signature
     // from JS and make sure they're equal.
     let body = json!({
@@ -150,7 +175,7 @@ async fn send(message: Value) {
     let client = reqwest::Client::new();
     dbg!(&message);
     client
-        .post("http://localhost:3000/messages")
+        .post("http://localhost:80/messages")
         .json(&message)
         .send()
         .await;
@@ -181,7 +206,22 @@ async fn main() {
                 Some(title) => title,
                 None => panic!("title must be provided"),
             };
-            let message = create_message(password, href, title).await;
+            let ledger = false;
+            let message = create_message(password, href, title, ledger).await;
+            send(message).await;
+        }
+        Commands::SubmitLedger(args) => {
+            let href = match &args.href {
+                Some(href) => href,
+                None => panic!("href must be provided"),
+            };
+            let title = match &args.title {
+                Some(title) => title,
+                None => panic!("title must be provided"),
+            };
+            let ledger = true;
+            let password = String::new();
+            let message = create_message(&password, href, title, ledger).await;
             send(message).await;
         }
     }

@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 # We're using DaniPope's ethers-rs fork as the main stream branch had issues with
 # parsing the raw property name of `r#type`: https://t.me/ethers_rs/26846
-ethers = { rev = "5a85223", git = "https://github.com/gakonst/ethers-rs.git" }
+ethers = { features = ["ledger"], rev = "5a85223", git = "https://github.com/gakonst/ethers-rs.git" }
 tokio = { version = "1.27", features = ["macros"] }
 eyre = "0.6.8"
 clap = { version = "4.0", features = ["derive"] }
