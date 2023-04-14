@@ -39,8 +39,9 @@ A keystore file is an encrypted container that stores a private key, allowing
 you to securely sign messages. To generate a new keystore file, run the
 following command:
 
+```
 cargo run -- init <your_password>
-
+```
 
 Replace "your_password" with your desired password. The keystore file will be
 generated and stored in the .kiwistand directory under your home directory.
