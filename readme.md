@@ -39,7 +39,7 @@ A keystore file is an encrypted container that stores a private key, allowing
 you to securely sign messages. To generate a new keystore file, run the
 following command:
 
-./target/release/kiwistand init --password "your_password"
+cargo run -- init <your_password>
 
 
 Replace "your_password" with your desired password. The keystore file will be
