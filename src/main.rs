@@ -176,7 +176,7 @@ async fn send(message: Value) {
     let client = reqwest::Client::new();
     dbg!(&message);
     let result = client
-        .post("http://localhost:80/messages")
+        .post("https://news.kiwistand.com/messages")
         .json(&message)
         .send()
         .await;
