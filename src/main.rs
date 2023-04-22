@@ -129,7 +129,8 @@ mod tests {
 }
 
 async fn sign_ledger(message: &Message) -> Signature {
-    let ledger = Ledger::new(HDPath::LedgerLive(0), 1u64).await.unwrap();
+    let address_index = 0;
+    let ledger = Ledger::new(HDPath::LedgerLive(address_index), 1u64).await.unwrap();
 
     return ledger
         .sign_typed_struct(message)
