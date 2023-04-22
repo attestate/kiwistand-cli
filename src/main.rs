@@ -175,12 +175,20 @@ async fn create_message(password: &String, href: &String, title: &String, ledger
 async fn send(message: Value) {
     let client = reqwest::Client::new();
     dbg!(&message);
-    client
+    let result = client
         .post("http://localhost:80/messages")
         .json(&message)
         .send()
         .await;
+
+    let response = match result {
+        Ok(response) => response,
+        Err(error) => panic!("Failed sending message"),
+    };
+    let body = response.text().await;
+    dbg!(body);
 }
+
 
 #[tokio::main]
 async fn main() {
