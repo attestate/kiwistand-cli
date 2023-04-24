@@ -1,6 +1,7 @@
 // @format
 use clap::{Args, Parser, Subcommand};
 use dirs::home_dir;
+#[allow(unused_imports)]
 use ethers::{
     contract::{Eip712, EthAbiType},
     core::k256::ecdsa::SigningKey,
@@ -25,6 +26,8 @@ enum Commands {
     Init(InitArgs),
     Submit(SubmitArgs),
     SubmitLedger(LedgerArgs),
+    Vote(VoteArgs),
+    VoteLedger(VoteLedgerArgs),
 }
 
 #[derive(Args)]
@@ -43,7 +46,21 @@ struct SubmitArgs {
 struct LedgerArgs {
     href: Option<String>,
     title: Option<String>,
+    address_index: Option<usize>,
 }
+
+#[derive(Args)]
+struct VoteArgs {
+    password: Option<String>,
+    href: Option<String>,
+}
+
+#[derive(Args)]
+struct VoteLedgerArgs {
+    href: Option<String>,
+    address_index: Option<usize>,
+}
+
 
 fn get_config_path() -> PathBuf {
     let mut config_dir = home_dir().unwrap();
@@ -71,7 +88,7 @@ fn read_key(password: &String) -> LocalWallet {
     key_path.push("key");
     let wallet = match LocalWallet::decrypt_keystore(key_path, password) {
         Ok(wallet) => wallet,
-        Err(error) => panic!("Problem reading and/or decrypting the key store"),
+        Err(_error) => panic!("Problem reading and/or decrypting the key store"),
     };
     return wallet;
 }
@@ -128,8 +145,7 @@ mod tests {
     }
 }
 
-async fn sign_ledger(message: &Message) -> Signature {
-    let address_index = 0;
+async fn sign_ledger(message: &Message, address_index: usize) -> Signature {
     let ledger = Ledger::new(HDPath::LedgerLive(address_index), 1u64).await.unwrap();
 
     return ledger
@@ -145,8 +161,14 @@ async fn sign(wallet: LocalWallet, message: &Message) -> Signature {
         .expect("Couldn't sign message");
 }
 
-async fn create_message(password: &String, href: &String, title: &String, ledger: bool) -> Value {
-    let timestamp = get_unix_time();
+async fn create_message(
+    password: &String,
+    href: &String,
+    title: &String,
+    ledger: bool,
+    address_index: Option<usize>,
+) -> Value {
+        let timestamp = get_unix_time();
     let message = Message {
         title: String::from(title),
         href: String::from(href),
@@ -155,7 +177,8 @@ async fn create_message(password: &String, href: &String, title: &String, ledger
     };
     let sig;
     if ledger {
-        sig = sign_ledger(&message).await;
+        let index = address_index.unwrap_or(0);
+        sig = sign_ledger(&message, index).await;
     } else {
         let wallet = read_key(password);
         sig = sign(wallet, &message).await;
@@ -183,11 +206,12 @@ async fn send(message: Value) {
 
     let response = match result {
         Ok(response) => response,
-        Err(error) => panic!("Failed sending message"),
+        Err(_error) => panic!("Failed sending message"),
     };
     let body = response.text().await;
-    dbg!(body);
-}
+    if let Err(e) = dbg!(body) {
+        eprintln!("Error: {:?}", e);
+}}
 
 
 #[tokio::main]
@@ -216,7 +240,21 @@ async fn main() {
                 None => panic!("title must be provided"),
             };
             let ledger = false;
-            let message = create_message(password, href, title, ledger).await;
+            let message = create_message(password, href, title, ledger, None).await;
+            send(message).await;
+        }
+        Commands::Vote(args) => {
+            let password = match &args.password {
+                Some(password) => password,
+                None => panic!("password must be provided"),
+            };
+            let href = match &args.href {
+                Some(href) => href,
+                None => panic!("href must be provided"),
+            };
+            let ledger = false;
+            let title = String::new(); // Empty title
+            let message = create_message(password, href, &title, ledger, None).await;
             send(message).await;
         }
         Commands::SubmitLedger(args) => {
@@ -230,8 +268,22 @@ async fn main() {
             };
             let ledger = true;
             let password = String::new();
-            let message = create_message(&password, href, title, ledger).await;
+            let address_index = args.address_index;
+            let message = create_message(&password, href, title, ledger, address_index).await;
             send(message).await;
+        }
+        Commands::VoteLedger(args) => {
+            let href = match &args.href {
+                Some(href) => href,
+                None => panic!("href must be provided"),
+            };
+            let ledger = true;
+            let password = String::new();
+            let title = String::new(); // Empty title
+            let address_index = args.address_index;
+            let message = create_message(&password, href, &title, ledger, address_index).await;
+            send(message).await;
+
         }
     }
 }
