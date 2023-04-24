@@ -3,56 +3,99 @@
 Kiwistand is a Rust command-line application for submitting links with their
 titles to the Kiwinews service hosted at news.kiwistand.com. The application
 signs the submitted messages using Ethereum's EIP-712 typed data.
+<br> 
+
 
 ## Prerequisites
 
-- Rust and Cargo installed
+- Rust and Cargo installed, for help see [guide](https://doc.rust-lang.org/book/ch01-01-installation.html")
+- Wallet with an [kiwistand NFT](#nft-required)
 - An internet connection
+<br> 
+
 
 ## Quick Installation Tutorial
 
 1. Clone this repository:
-
-   git clone https://github.com/attestate/kiwistand-cli.git
+```console
+git clone https://github.com/attestate/kiwistand-cli.git
+```
 
 2. Navigate to the cloned directory:
+```console
+cd kiwistand-cli
+```
 
-   cd kiwistand
+3. Execute commands in the directory:
+```console
+cargo [options]
+```
+*we use `cargo` to execute the commands for now*
 
-3. Make sure you adjust the target endpoint in `src/main.rs` from
-   `http://localhost` to the node you want to submit the link to.
 
-## Submitting a Link with a Ledger
+### Submit a Link with a Ledger
 
-- Make sure to have Ledger Live open and your Ledger connected
+**Make sure to have Ledger Live open and your Ledger connected**
 
 To submit a link with its title, run the following command:
 
-```
-cargo run -- submit-ledger https://warpcast.com/timdaub/0x1f54f8 "Kiwistand is live"
+```console
+cargo run -- submit-ledger [Link] [Title] [WalletIndex]
 ```
 
-Replace "https://warpcast.com", and "Kiwistand is live" with your desired link,
-and title, respectively.
+- `[Link]` *insert your own link*
+- `[Title]` *insert your own title as a string (in "double quotation marks")*
+- `[WalletIndex]` *insert an index starting at 0 to choose the wallet, if let empty reverts to standart (0)
 
-## Submitting a Link
+
+### Vote for a Link with a Ledger
+
+**Make sure to have Ledger Live open and your Ledger connected**
+
+To vote for a post, you have to resubmit the link.
+run the following command:
+
+```console
+cargo run -- vote-ledger [Link] [WalletIndex]
+```
+
+- `[Link]` *insert your own link*
+- `[WalletIndex]` *insert an index starting at 0 to choose the wallet, if let empty reverts to standart (0)
+
+
+### Submit a Link
 
 To submit a link with its title, run the following command:
 
-```
-cargo run -- submit abc https://warpcast.com/timdaub/0x1f54f8 "Kiwistand is live"
+```console
+cargo run -- submit [Password] [Link] [Title]
 ```
 
-Replace the "abc" password, "https://warpcast.com", and "Kiwistand is live"
-with your desired link, and title, respectively.
+- `[Password]` *insert your password*
+- `[Link]` *insert your own link*
+- `[Title]` *insert your own title as a string (in "double quotation marks")*
 
-## Generating a New Keystore File
+
+### Vote for a Link
+
+To vote for a post, you have to resubmit the link.
+run the following command:
+
+```console
+cargo run -- vote [Password] [Link]
+```
+
+- `[Password]` *insert your password*
+- `[Link]` *insert your own link*
+
+
+### Generating a New Keystore File
 
 A keystore file is an encrypted container that stores a private key, allowing
 you to securely sign messages. To generate a new keystore file, run the
 following command:
 
-```
+```console
 cargo run -- init <your_password>
 ```
 
@@ -60,13 +103,15 @@ Replace "your_password" with your desired password. The keystore file will be
 generated and stored in the .kiwistand directory under your home directory. The
 keystore file is at `$home/.kiwistand/key`.
 
+<br> 
+
 ## NFT Required!
 
-Consider that your address must be a "minter" of the
-http://kiwistand.com NFT, otherwise your submission won't be accepted by the
-nodes. This means, it must be the `to` address in the token's first
-`Transfer(from, to, tokenId)` event where `from=address(0)`. Otherwise
+Consider that your address must be a "minter" of the [kiwistand NFT](https://kiwistand.com), otherwise your submission won't be accepted by the nodes.
+This means, it must be the `to` address in the token's first `Transfer(from, to, tokenId)` event where `from=address(0)`. Otherwise
 your message will be dropped and considered invalid.
+
+<br> 
 
 ## License
 
