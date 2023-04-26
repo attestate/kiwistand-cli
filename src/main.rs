@@ -9,8 +9,8 @@ use ethers::{
     signers::{HDPath, Ledger, LocalWallet, Signer},
 };
 use serde_json::{json, Value};
-use std::fs;
-use std::path::{Path, PathBuf};
+
+use std::path::{PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // Define the CLI parser and its options
@@ -25,8 +25,6 @@ struct Cli {
 /// An enumeration representing the various subcommands supported by the CLI.
 #[derive(Subcommand)]
 enum Commands {
-    /// Initializes the application by creating a new keystore with a provided password.
-    Init(InitArgs),
     /// Submits an article with a provided password, href, and title.
     Submit(SubmitArgs),
     /// Submits an article using a Ledger hardware wallet with a provided href, title, and optional address index.
@@ -35,12 +33,6 @@ enum Commands {
     Vote(VoteArgs),
     /// Votes for an article using a Ledger hardware wallet with a provided href and optional address index.
     VoteLedger(VoteLedgerArgs),
-}
-
-/// `InitArgs` contains the password for the user's key store.
-#[derive(Args)]
-struct InitArgs {
-    password: Option<String>,
 }
 
 /// `SubmitArgs` contains the password, href, and title for submitting a new article.
@@ -79,25 +71,7 @@ struct VoteLedgerArgs {
 fn get_config_path() -> PathBuf {
     let mut config_dir = home_dir().unwrap();
     config_dir.push(".kiwistand");
-    return config_dir;
-}
-
-/// Stores the user's key in a new key store using the given password.
-///
-/// If a key store already exists, the function will print a message and return early.
-fn store_key(password: &String) {
-    let config_dir = get_config_path();
-    let _ = fs::create_dir(&config_dir);
-    let name = "key";
-
-    let mut key_path = get_config_path();
-    key_path.push(name);
-    if !Path::new(&key_path).exists() {
-        let mut rng = rand::thread_rng();
-        LocalWallet::new_keystore(&config_dir, &mut rng, password, Some(name)).unwrap();
-        return;
-    }
-    println!("Bailed from creating key store as it already exists.");
+    config_dir
 }
 
 /// Reads the key store and returns a `LocalWallet` instance.
@@ -107,11 +81,11 @@ fn store_key(password: &String) {
 fn read_key(password: &String) -> LocalWallet {
     let mut key_path = get_config_path();
     key_path.push("key");
-    let wallet = match LocalWallet::decrypt_keystore(key_path, password) {
+
+    match LocalWallet::decrypt_keystore(key_path, password) {
         Ok(wallet) => wallet,
         Err(_error) => panic!("Problem reading and/or decrypting the key store"),
-    };
-    return wallet;
+    }
 }
 
 // Define the EIP-712 message struct
@@ -134,7 +108,7 @@ fn get_unix_time() -> u64 {
     let now = start
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
-    return now.as_secs();
+    now.as_secs()
 }
 
 // Unit test
@@ -179,20 +153,20 @@ async fn sign_ledger(message: &Message, address_index: usize) -> Signature {
         .await
         .unwrap();
 
-    return ledger
+    ledger
         .sign_typed_struct(message)
         .await
-        .expect("failed to sign typed data");
+        .expect("failed to sign typed data")
 }
 
 /// Signs the given EIP-712 message with a `LocalWallet` instance.
 ///
 /// Returns the generated signature.
 async fn sign(wallet: LocalWallet, message: &Message) -> Signature {
-    return wallet
+    wallet
         .sign_typed_data(message)
         .await
-        .expect("Couldn't sign message");
+        .expect("Couldn't sign message")
 }
 
 /// Creates a signed EIP-712 message using the provided password, href, and title.
@@ -214,14 +188,13 @@ async fn create_message(
         r#type: String::from("amplify"),
         timestamp: U256::from(timestamp),
     };
-    let sig;
-    if ledger {
+    let sig = if ledger {
         let index = address_index.unwrap_or(0);
-        sig = sign_ledger(&message, index).await;
+        sign_ledger(&message, index).await
     } else {
         let wallet = read_key(password);
-        sig = sign(wallet, &message).await;
-    }
+        sign(wallet, &message).await
+    };
     // TODO: We should actually test this signature against the signature
     // from JS and make sure they're equal.
     let body = json!({
@@ -229,9 +202,10 @@ async fn create_message(
         "href": message.href,
         "type": message.r#type,
         "timestamp": timestamp,
-        "signature": format!("0x{}", sig.to_string()),
+        "signature": format!("0x{}", sig),
     });
-    return body;
+
+    body
 }
 
 /// Sends the signed EIP-712 message to the Kiwistand server.
@@ -265,14 +239,6 @@ async fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        // Initialize a new wallet with the given password
-        Commands::Init(args) => {
-            let password = match &args.password {
-                Some(password) => password,
-                None => panic!("password must be provided"),
-            };
-            store_key(password);
-        }
         // Submit a news item with the given href and title
         Commands::Submit(args) => {
             let password = match &args.password {
