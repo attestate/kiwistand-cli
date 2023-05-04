@@ -11,10 +11,11 @@ signs the submitted messages using Ethereum's EIP-712 typed data.
 - Rust and Cargo installed, for help see [guide](https://doc.rust-lang.org/book/ch01-01-installation.html")
 - Wallet with an [kiwistand NFT](#nft-required)
 - An internet connection
+- Recommended to use a Ledger Wallet
 <br> 
 
 
-## Quick Installation Tutorial
+## Set Up
 
 1. Clone this repository:
 ```console
@@ -26,86 +27,66 @@ git clone https://github.com/attestate/kiwistand-cli.git
 cd kiwistand-cli
 ```
 
-3. Execute commands in the directory:
+3. Initiate the config file and set it up:
 ```console
-cargo [options]
+cargo run config
 ```
+
+4. Execute commands in the directory:
+```console
+cargo run [subcommands]
+```
+
 *we use `cargo` to execute the commands for now*
 
+## Config
 
-### Submit a Link with a Ledger
+You can configure how to use kiwistand-cli by setting the parameters as you wish.
 
-**Make sure to have Ledger Live open and your Ledger connected**
-
-To submit a link with its title, run the following command:
-
+To show your current parameters:
 ```console
-cargo run -- submit-ledger [Link] [Title] [WalletIndex]
+cargo run config -s
 ```
 
-- `[Link]` *insert your own link*
-- `[Title]` *insert your own title as a string (in "double quotation marks")*
-- `[WalletIndex]` *insert an index starting at 0 to choose the wallet, if let empty reverts to standart (0)
-
-
-### Vote for a Link with a Ledger
-
-**Make sure to have Ledger Live open and your Ledger connected**
-
-To vote for a post, you have to resubmit the link.
-run the following command:
-
+If you want to see the options available to you:
 ```console
-cargo run -- vote-ledger [Link] [WalletIndex]
+cargo run help config
 ```
 
-- `[Link]` *insert your own link*
-- `[WalletIndex]` *insert an index starting at 0 to choose the wallet, if let empty reverts to standart (0)
+### Non Ledger Wallet
+If you don't use a Ledger wallet:
+- set Ledger to `false` 
+- set the path to your keysotre file
 
+*don't forget to use your password when submitting or voting.*
+
+## Subcommands
+When using a Ledger wallet, make sure to have it connected and unlocked.
+
+When using a keystore file, append the password.
 
 ### Submit a Link
 
-**Store the keystore file in `~/.kiwistand/` with the name 'key'**
-
 To submit a link with its title, run the following command:
 
 ```console
-cargo run -- submit [Password] [Link] [Title]
+cargo run submit [Link] [Title]
 ```
 
-- `[Password]` *insert your keystore password*
 - `[Link]` *insert your own link*
 - `[Title]` *insert your own title as a string (in "double quotation marks")*
 
 
 ### Vote for a Link
 
-**Store the keystore file in `~/.kiwistand/` with the name 'key'**
-
 To vote for a post, you have to resubmit the link.
 run the following command:
 
 ```console
-cargo run -- vote [Password] [Link]
+cargo run vote [Link]
 ```
 
-- `[Password]` *insert your keystore password*
-- `[Link]` *insert your own link*
-
-
-### Generating a New Keystore File
-
-A keystore file is an encrypted container that stores a private key, allowing
-you to securely sign messages. To generate a new keystore file, run the
-following command:
-
-```console
-cargo run -- init <your_password>
-```
-
-Replace "your_password" with your desired password. The keystore file will be
-generated and stored in the .kiwistand directory under your home directory. The
-keystore file is at `$home/.kiwistand/key`.
+- `[Link]` *insert the link you want to vote for*
 
 <br> 
 
