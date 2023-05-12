@@ -65,18 +65,22 @@ cargo run -- vote-ledger [Link] [WalletIndex]
 
 ### Submit a Link
 
+**Store the keystore file in `~/.kiwistand/` with the name 'key'**
+
 To submit a link with its title, run the following command:
 
 ```console
 cargo run -- submit [Password] [Link] [Title]
 ```
 
-- `[Password]` *insert your password*
+- `[Password]` *insert your keystore password*
 - `[Link]` *insert your own link*
 - `[Title]` *insert your own title as a string (in "double quotation marks")*
 
 
 ### Vote for a Link
+
+**Store the keystore file in `~/.kiwistand/` with the name 'key'**
 
 To vote for a post, you have to resubmit the link.
 run the following command:
@@ -85,7 +89,7 @@ run the following command:
 cargo run -- vote [Password] [Link]
 ```
 
-- `[Password]` *insert your password*
+- `[Password]` *insert your keystore password*
 - `[Link]` *insert your own link*
 
 
